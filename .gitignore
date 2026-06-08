@@ -1,0 +1,15 @@
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
+.ipynb_checkpoints/
+
+/data/raw/statcast/*.parquet
+/data/processed/*.parquet
+/data/interim/*
+!/data/interim/.gitkeep
+/models/*.joblib
+/reports/*.json
+/reports/*.csv
+/reports/*.txt
+/reports/*.md

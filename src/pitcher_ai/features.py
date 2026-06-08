@@ -1,0 +1,161 @@
+from __future__ import annotations
+
+from pathlib import Path
+
+import polars as pl
+
+from pitcher_ai.config import FEATURES_PATH, PROCESSED_DIR, RAW_STATCAST_GLOB
+from pitcher_ai.pitch_types import PITCH_CLASS, PITCH_TYPE_NAME, pitch_type_to_class, pitch_type_to_name
+from pitcher_ai.util import console, ensure_dirs
+
+TARGET = "pitch_type"
+
+IDENTITY_COLUMNS = [
+    "game_date",
+    "game_pk",
+    "at_bat_number",
+    "pitch_number",
+    "pitcher",
+    "batter",
+]
+
+BASE_FEATURE_COLUMNS = [
+    "pitcher",
+    "batter",
+    "stand",
+    "p_throws",
+    "balls",
+    "strikes",
+    "outs_when_up",
+    "inning",
+    "inning_topbot",
+    "home_team",
+    "away_team",
+    "bat_score",
+    "fld_score",
+    "pitch_number",
+    "on_1b",
+    "on_2b",
+    "on_3b",
+    "prev_pitch_type",
+    "prev_release_speed",
+    "prev_balls",
+    "prev_strikes",
+    "count",
+    "base_state",
+    "score_diff",
+]
+
+SORT_COLUMNS = ["game_date", "game_pk", "at_bat_number", "pitch_number"]
+GROUP_COLUMNS = ["game_pk", "at_bat_number"]
+
+
+def build_context_features(
+    raw_glob: str = RAW_STATCAST_GLOB,
+    output_path: Path = FEATURES_PATH,
+    min_pitch_type_count: int = 100,
+) -> Path:
+    """Build pre-pitch context features without current-pitch leakage.
+
+    This intentionally excludes current pitch measurements such as release speed,
+    spin, movement, location, and batted-ball fields. Previous-pitch measurements
+    are allowed because they would be known before the next pitch.
+    """
+    ensure_dirs([PROCESSED_DIR])
+
+    console.print(f"Reading Statcast parquet files from {raw_glob}")
+    lf = pl.scan_parquet(raw_glob)
+    available = set(lf.collect_schema().names())
+
+    required = {"pitch_type", "game_pk", "at_bat_number", "pitch_number"}
+    missing = required - available
+    if missing:
+        raise ValueError(f"Missing required columns: {sorted(missing)}")
+
+    sort_cols = [col for col in SORT_COLUMNS if col in available]
+    if sort_cols:
+        lf = lf.sort(sort_cols)
+
+    optional_numeric_defaults = {
+        "balls": 0,
+        "strikes": 0,
+        "outs_when_up": 0,
+        "inning": 0,
+        "bat_score": 0,
+        "fld_score": 0,
+        "pitch_number": 0,
+        "release_speed": None,
+    }
+    optional_string_defaults = {
+        "stand": "UNK",
+        "p_throws": "UNK",
+        "inning_topbot": "UNK",
+        "home_team": "UNK",
+        "away_team": "UNK",
+    }
+
+    for col, default in optional_numeric_defaults.items():
+        if col not in available:
+            lf = lf.with_columns(pl.lit(default).alias(col))
+    for col, default in optional_string_defaults.items():
+        if col not in available:
+            lf = lf.with_columns(pl.lit(default).alias(col))
+    for col in ["on_1b", "on_2b", "on_3b"]:
+        if col not in available:
+            lf = lf.with_columns(pl.lit(None).alias(col))
+
+    group_cols = [col for col in GROUP_COLUMNS if col in available]
+    if len(group_cols) != 2:
+        raise ValueError("Need game_pk and at_bat_number to compute previous-pitch features")
+
+    lf = lf.with_columns(
+        [
+            pl.col("pitch_type").shift(1).over(group_cols).alias("prev_pitch_type"),
+            pl.col("release_speed").shift(1).over(group_cols).alias("prev_release_speed"),
+            pl.col("balls").shift(1).over(group_cols).alias("prev_balls"),
+            pl.col("strikes").shift(1).over(group_cols).alias("prev_strikes"),
+        ]
+    )
+
+    lf = lf.with_columns(
+        [
+            (pl.col("balls").cast(pl.Int64).cast(pl.Utf8) + "-" + pl.col("strikes").cast(pl.Int64).cast(pl.Utf8)).alias("count"),
+            pl.when(pl.col("on_1b").is_not_null()).then(1).otherwise(0).alias("on_1b"),
+            pl.when(pl.col("on_2b").is_not_null()).then(1).otherwise(0).alias("on_2b"),
+            pl.when(pl.col("on_3b").is_not_null()).then(1).otherwise(0).alias("on_3b"),
+            (pl.col("bat_score").fill_null(0) - pl.col("fld_score").fill_null(0)).alias("score_diff"),
+        ]
+    )
+
+    lf = lf.with_columns(
+        (
+            pl.col("on_1b").cast(pl.Utf8)
+            + pl.col("on_2b").cast(pl.Utf8)
+            + pl.col("on_3b").cast(pl.Utf8)
+        ).alias("base_state")
+    )
+
+    candidate_keep_cols = [col for col in IDENTITY_COLUMNS + [TARGET] + BASE_FEATURE_COLUMNS if col in lf.collect_schema().names()]
+    keep_cols = list(dict.fromkeys(candidate_keep_cols))
+    df = lf.select(keep_cols).filter(pl.col(TARGET).is_not_null()).collect()
+
+    counts = df.group_by(TARGET).len().rename({"len": "target_count"})
+    keep_targets = counts.filter(pl.col("target_count") >= min_pitch_type_count).select(TARGET)
+    df = df.join(keep_targets, on=TARGET, how="inner")
+
+    df = df.with_columns(
+        [
+            pl.col("prev_pitch_type").fill_null("NONE"),
+            pl.col("prev_release_speed").fill_null(-1.0),
+            pl.col("prev_balls").fill_null(-1),
+            pl.col("prev_strikes").fill_null(-1),
+            pl.col(TARGET).map_elements(pitch_type_to_class, return_dtype=pl.Utf8).alias(PITCH_CLASS),
+            pl.col(TARGET).map_elements(pitch_type_to_name, return_dtype=pl.Utf8).alias(PITCH_TYPE_NAME),
+        ]
+    )
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    df.write_parquet(output_path)
+    console.print(f"Wrote {len(df):,} feature rows to {output_path}")
+    console.print(f"Kept {df.select(TARGET).n_unique():,} pitch types with at least {min_pitch_type_count:,} rows")
+    return output_path

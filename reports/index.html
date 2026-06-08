@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Pitcher AI Results</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 32px; line-height: 1.45; }
+    table { border-collapse: collapse; margin: 1rem 0 2rem 0; }
+    th, td { border: 1px solid #ddd; padding: 8px 10px; text-align: left; }
+    th { background: #f5f5f5; }
+    img { max-width: 100%; border: 1px solid #ddd; border-radius: 8px; }
+    pre { white-space: pre-wrap; background: #f8f8f8; padding: 16px; border-radius: 8px; }
+    .missing { color: #8a4b00; background: #fff6e6; border: 1px solid #ffd999; padding: 10px; border-radius: 8px; }
+  </style>
+</head>
+<body>
+  <h1>Pitcher AI Results</h1>
+  <p>This report summarizes the context-only baseline. It does not use video yet.</p>
+  <p>The standard confusion matrices are read row by row as <strong>Actual → Predicted</strong>. The “When the Model Predicts…” matrices are read row by row as <strong>Predicted → Actual</strong>, which answers questions like: when the model predicts Fastball, what actually happened?</p>
+  <h2>Metrics</h2>
+  <table><tr><th>rows_total</th><td>25945</td></tr>
+<tr><th>rows_train</th><td>17393</td></tr>
+<tr><th>rows_test</th><td>8552</td></tr>
+<tr><th>split_date</th><td>2024-04-05</td></tr>
+<tr><th>overall_majority_baseline_accuracy</th><td>32.0%</td></tr>
+<tr><th>pitcher_count_baseline_accuracy</th><td>37.3%</td></tr>
+<tr><th>context_model_accuracy</th><td>33.4%</td></tr>
+<tr><th>overall_majority_baseline_pitch_class_accuracy</th><td>56.0%</td></tr>
+<tr><th>pitcher_count_baseline_pitch_class_accuracy</th><td>55.3%</td></tr>
+<tr><th>context_model_pitch_class_accuracy</th><td>50.6%</td></tr>
+</table>
+  <h2>Accuracy comparison</h2><img src='accuracy_comparison.png' alt='Accuracy comparison'><h2>Pitch Type Confusion Matrix: Actual → Predicted</h2><img src='confusion_matrix_pitch_type.png' alt='Pitch Type Confusion Matrix: Actual → Predicted'><h2>Pitch Type Matrix: When the Model Predicts…</h2><img src='confusion_matrix_pitch_type_when_predicted.png' alt='Pitch Type Matrix: When the Model Predicts…'><h2>Pitch Class Confusion Matrix: Actual → Predicted</h2><img src='confusion_matrix_pitch_class.png' alt='Pitch Class Confusion Matrix: Actual → Predicted'><h2>Pitch Class Matrix: When the Model Predicts…</h2><img src='confusion_matrix_pitch_class_when_predicted.png' alt='Pitch Class Matrix: When the Model Predicts…'><h2>Pitch Type Distribution</h2><img src='pitch_type_distribution.png' alt='Pitch Type Distribution'><h2>Pitch Class Distribution</h2><img src='pitch_class_distribution.png' alt='Pitch Class Distribution'><h2>Pitcher Pitch Mix</h2><img src='pitch_mix_top_pitchers.png' alt='Pitcher Pitch Mix'>
+  
+  <h2>Pitch Type Key</h2>
+  <table>
+    <tr><th>Code</th><th>Official pitch name</th><th>Pitch class</th></tr>
+    <tr><td>AB</td><td>Automatic ball</td><td>Other/Rare</td></tr>
+<tr><td>AS</td><td>Automatic strike</td><td>Other/Rare</td></tr>
+<tr><td>CH</td><td>Changeup</td><td>Offspeed</td></tr>
+<tr><td>CU</td><td>Curveball</td><td>Breaking</td></tr>
+<tr><td>EP</td><td>Eephus</td><td>Other/Rare</td></tr>
+<tr><td>FA</td><td>Fastball</td><td>Fastball</td></tr>
+<tr><td>FC</td><td>Cutter</td><td>Fastball</td></tr>
+<tr><td>FF</td><td>Four-seam fastball</td><td>Fastball</td></tr>
+<tr><td>FO</td><td>Forkball</td><td>Offspeed</td></tr>
+<tr><td>FS</td><td>Splitter</td><td>Offspeed</td></tr>
+<tr><td>FT</td><td>Two-seam fastball</td><td>Fastball</td></tr>
+<tr><td>GY</td><td>Gyroball</td><td>Other/Rare</td></tr>
+<tr><td>IN</td><td>Intentional ball</td><td>Other/Rare</td></tr>
+<tr><td>KC</td><td>Knuckle-curve</td><td>Breaking</td></tr>
+<tr><td>KN</td><td>Knuckleball</td><td>Other/Rare</td></tr>
+<tr><td>NP</td><td>No pitch</td><td>Other/Rare</td></tr>
+<tr><td>PO</td><td>Pitchout</td><td>Other/Rare</td></tr>
+<tr><td>SC</td><td>Screwball</td><td>Other/Rare</td></tr>
+<tr><td>SI</td><td>Sinker</td><td>Fastball</td></tr>
+<tr><td>SL</td><td>Slider</td><td>Breaking</td></tr>
+<tr><td>ST</td><td>Sweeper</td><td>Breaking</td></tr>
+<tr><td>SV</td><td>Slurve</td><td>Breaking</td></tr>
+<tr><td>UN</td><td>Unknown</td><td>Other/Rare</td></tr>
+  </table>
+
+  <h2>Generated Files</h2>
+  <table><tr><th>Item</th><th>File</th></tr><tr><td>accuracy_chart</td><td>accuracy_comparison.png</td></tr><tr><td>pitch_type_confusion_matrix_chart</td><td>confusion_matrix_pitch_type.png</td></tr><tr><td>pitch_type_when_predicted_chart</td><td>confusion_matrix_pitch_type_when_predicted.png</td></tr><tr><td>pitch_class_confusion_matrix_chart</td><td>confusion_matrix_pitch_class.png</td></tr><tr><td>pitch_class_when_predicted_chart</td><td>confusion_matrix_pitch_class_when_predicted.png</td></tr><tr><td>pitch_type_distribution_chart</td><td>pitch_type_distribution.png</td></tr><tr><td>pitch_class_distribution_chart</td><td>pitch_class_distribution.png</td></tr><tr><td>pitch_mix_chart</td><td>pitch_mix_top_pitchers.png</td></tr><tr><td>pitch_type_key_csv</td><td>pitch_type_key.csv</td></tr></table>
+  
+  <h2>Summary</h2>
+  <pre># Pitcher AI baseline summary
+
+Rows total: 25,945
+Rows train: 17,393
+Rows test: 8,552
+Split date: 2024-04-05
+
+## Pitch-type accuracy
+
+Overall majority baseline: 0.320
+Pitcher/count baseline: 0.373
+Context model: 0.334
+
+## Pitch-class accuracy
+
+Overall majority baseline: 0.560
+Pitcher/count baseline: 0.553
+Context model mapped to class: 0.506
+
+## Pitch classes
+
+Fastball: FF, SI, FC, FT, FA
+Breaking: SL, ST, CU, KC, SV
+Offspeed: CH, FS, FO
+Other/Rare: KN, EP, SC, GY plus administrative/non-pitch feed codes if present
+
+## Interpretation
+
+The context model uses only pre-pitch information. It intentionally excludes current-pitch release speed, spin, movement, plate location, and batted-ball fields.
+
+The pitch-class confusion matrix maps predicted pitch types into broader pitch families, so FF predicted as SI is wrong at the official pitch-type level but still correct at the pitch-class level.
+
+The next major experiment is to add pre-release video or pose features and test whether they improve over this context-only baseline.
+</pre>
+</body>
+</html>
