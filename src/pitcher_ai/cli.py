@@ -96,5 +96,32 @@ def visualize_results_command(
     )
 
 
+@app.command("fetch-videos")
+def fetch_videos_command(
+    features_path: Path = typer.Option(Path("data/processed/pitch_context_features.parquet")),
+    output_dir: Path = typer.Option(Path("data/interim/video_clips")),
+    manifest_path: Path = typer.Option(Path("data/interim/video_manifest.csv")),
+    max_per_type: int = typer.Option(20, help="Max clips to download per pitch type"),
+    pitch_types: str = typer.Option("", help="Comma-separated pitch types to include, e.g. FF,SL (empty=all)"),
+    pitcher_id: int | None = typer.Option(None, help="Filter to a single pitcher MLBAM ID"),
+    request_delay: float = typer.Option(0.5, help="Seconds to wait between HTTP requests"),
+    overwrite: bool = typer.Option(False, help="Re-download clips that already exist"),
+) -> None:
+    """Download pitch video clips from Baseball Savant, tagged by pitch type."""
+    from pitcher_ai.video_fetch import fetch_videos
+
+    types_list = [t.strip() for t in pitch_types.split(",") if t.strip()] or None
+    fetch_videos(
+        features_path=features_path,
+        output_dir=output_dir,
+        manifest_path=manifest_path,
+        max_per_type=max_per_type,
+        pitch_types=types_list,
+        pitcher_id=pitcher_id,
+        request_delay=request_delay,
+        overwrite=overwrite,
+    )
+
+
 if __name__ == "__main__":
     app()
