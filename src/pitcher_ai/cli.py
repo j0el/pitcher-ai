@@ -96,6 +96,24 @@ def visualize_results_command(
     )
 
 
+@app.command("train-pose")
+def train_pose_command(
+    pose_path: Path = typer.Option(Path("data/processed/pose_features.parquet")),
+    context_path: Path = typer.Option(Path("data/processed/pitch_context_features.parquet")),
+    n_folds: int = typer.Option(5, help="Number of CV folds"),
+    min_class_samples: int = typer.Option(5, help="Drop pitch types with fewer rows than this"),
+) -> None:
+    """Compare context-only, pose-only, and context+pose models via cross-validation."""
+    from pitcher_ai.train_pose_model import train_pose_comparison
+
+    train_pose_comparison(
+        pose_path=pose_path,
+        context_path=context_path,
+        n_folds=n_folds,
+        min_class_samples=min_class_samples,
+    )
+
+
 @app.command("extract-pose")
 def extract_pose_command(
     manifest_path: Path = typer.Option(Path("data/interim/video_manifest.csv")),
