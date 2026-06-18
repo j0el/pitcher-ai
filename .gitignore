@@ -14,3 +14,4 @@ __pycache__/
 /reports/*.csv
 /reports/*.txt
 /reports/*.md
+!/reports/findings.md
