@@ -9,6 +9,7 @@ __pycache__/
 /data/interim/*
 !/data/interim/.gitkeep
 /models/*.joblib
+/models/*.task
 /reports/*.json
 /reports/*.csv
 /reports/*.txt

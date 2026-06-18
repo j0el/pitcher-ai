@@ -8,6 +8,7 @@ dependencies = [
     "duckdb>=1.1.0",
     "joblib>=1.4.2",
     "matplotlib>=3.9.0",
+    "mediapipe>=0.10.35",
     "numpy>=1.26.4",
     "pandas>=2.2.2",
     "polars>=1.0.0",

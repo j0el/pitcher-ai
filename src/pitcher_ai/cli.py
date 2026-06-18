@@ -96,6 +96,26 @@ def visualize_results_command(
     )
 
 
+@app.command("extract-pose")
+def extract_pose_command(
+    manifest_path: Path = typer.Option(Path("data/interim/video_manifest.csv")),
+    statcast_path: Path = typer.Option(Path("data/processed/statcast_all.parquet")),
+    output_path: Path = typer.Option(Path("data/processed/pose_features.parquet")),
+    model_path: Path = typer.Option(Path("models/pose_landmarker_lite.task")),
+    overwrite: bool = typer.Option(False, help="Re-process clips that already have features"),
+) -> None:
+    """Extract pre-release pose features from trimmed pitch clips."""
+    from pitcher_ai.pose_extract import extract_pose_features
+
+    extract_pose_features(
+        manifest_path=manifest_path,
+        statcast_path=statcast_path,
+        output_path=output_path,
+        model_path=model_path,
+        overwrite=overwrite,
+    )
+
+
 @app.command("fetch-videos")
 def fetch_videos_command(
     features_path: Path = typer.Option(Path("data/processed/pitch_context_features.parquet")),
